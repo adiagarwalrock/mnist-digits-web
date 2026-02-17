@@ -33,13 +33,12 @@
   "scripts": {
     "dev:cf": "wrangler dev",
     "deploy:cf": "wrangler deploy",
-    "dev:vercel": "vercel dev",
-    "deploy:vercel": "vercel --prod",
+    "dev:vercel": "npx vercel dev",
+    "deploy:vercel": "npx vercel --prod",
     "preview": "serve web"
   },
   "devDependencies": {
     "serve": "^14.2.4",
-    "vercel": "^39.1.0",
     "wrangler": "^4.15.2"
   }
 }
