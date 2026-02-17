@@ -1,4 +1,4 @@
-name = "mnist-digits-web"
+name = "digits"
 main = "worker.js"
 compatibility_date = "2026-02-17"
 
