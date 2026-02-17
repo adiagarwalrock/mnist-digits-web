@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "serve": "^14.2.4",
-    "vercel": "^39.1.0",
+    "vercel": "^50.18.0",
     "wrangler": "^4.15.2"
   }
 }
