@@ -1,0 +1,45 @@
+{
+  "name": "mnist-digits-web",
+  "version": "1.0.0",
+  "description": "MNIST draw-and-predict ONNX UI",
+  "license": "MIT",
+  "author": {
+    "name": "Aditya Agarwal",
+    "url": "https://www.adityaagarwal.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adiagarwalrock/mnist-digits-web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adiagarwalrock/mnist-digits-web/issues"
+  },
+  "homepage": "https://github.com/adiagarwalrock/mnist-digits-web#readme",
+  "keywords": [
+    "mnist",
+    "onnx",
+    "onnxruntime-web",
+    "machine-learning",
+    "digit-recognition",
+    "neural-network-visualization",
+    "tensorflow-alternative",
+    "javascript",
+    "vercel",
+    "cloudflare-workers"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev:cf": "wrangler dev",
+    "deploy:cf": "wrangler deploy",
+    "dev:vercel": "vercel dev",
+    "deploy:vercel": "vercel --prod",
+    "preview": "serve web"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4",
+    "vercel": "^39.1.0",
+    "wrangler": "^4.15.2"
+  }
+}
