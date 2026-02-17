@@ -1,0 +1,6 @@
+# Source repository: https://github.com/adiagarwalrock/mnist-digits-web
+
+User-agent: *
+Allow: /
+
+Sitemap: https://www.adityaagarwal.me/sitemap.xml

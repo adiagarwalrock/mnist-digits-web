@@ -1,0 +1,10 @@
+/* TEAM */
+Creator: Aditya Agarwal
+Website: https://www.adityaagarwal.me
+GitHub Profile: https://github.com/adiagarwalrock
+GitHub Repository: https://github.com/adiagarwalrock/mnist-digits-web
+LinkedIn: https://www.linkedin.com/in/adityaagarwal1999/
+
+/* SITE */
+Project: MNIST Live Inference Visualizer
+Stack: HTML, CSS, JavaScript, ONNX Runtime Web

@@ -1,0 +1,17 @@
+{
+  "name": "MNIST Live Inference Visualizer",
+  "short_name": "MNIST Visualizer",
+  "description": "Draw digits on a 28x28 grid and run live ONNX inference in the browser.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#fcfcfd",
+  "theme_color": "#fcfcfd",
+  "lang": "en",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://github.com/adiagarwalrock/mnist-digits-web"
+    }
+  ]
+}
