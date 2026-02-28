@@ -1,177 +1,210 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MNIST Live Inference Visualizer | Draw & Predict Digits in Browser</title>
-    <meta
-      name="description"
-      content="Interactive MNIST ONNX visualizer by Aditya Agarwal. Draw digits on a 28x28 grid, run real-time inference in the browser, and inspect live neural activations."
-    />
-    <meta
-      name="keywords"
-      content="MNIST, ONNX, ONNX Runtime Web, digit recognition, neural network visualization, machine learning demo, 28x28 grid, browser AI"
-    />
-    <meta name="author" content="Aditya Agarwal" />
-    <meta name="creator" content="Aditya Agarwal" />
-    <meta name="publisher" content="Aditya Agarwal" />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="theme-color" content="#fcfcfd" />
-    <meta name="application-name" content="MNIST Live Inference Visualizer" />
-    <link id="canonical-link" rel="canonical" href="https://www.adityaagarwal.me/" />
-    <link rel="me" href="https://github.com/adiagarwalrock/mnist-digits-web" />
-    <link rel="manifest" href="./site.webmanifest" />
 
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:site_name" content="MNIST Live Inference Visualizer" />
-    <meta property="og:title" content="MNIST Live Inference Visualizer | Draw & Predict Digits in Browser" />
-    <meta
-      property="og:description"
-      content="Draw a digit on a 28x28 grid and run ONNX inference in real time with live layer/tensor visualization."
-    />
-    <meta property="og:url" content="https://www.adityaagarwal.me/" />
-    <meta property="og:image" content="https://www.adityaagarwal.me/favicon.ico" />
-    <meta property="og:see_also" content="https://github.com/adiagarwalrock/mnist-digits-web" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Neural Network Visualizer | Digit & Character Recognition in Browser</title>
+  <meta name="description"
+    content="Interactive MNIST & EMNIST visualizer by Aditya Agarwal. Draw digits (0-9) or letters (A-Z) on a 28x28 grid, run real-time ONNX inference in the browser, and inspect live neural activations." />
+  <meta name="keywords"
+    content="MNIST, EMNIST, ONNX, ONNX Runtime Web, digit recognition, character recognition, neural network visualization, machine learning demo, 28x28 grid, browser AI" />
+  <meta name="author" content="Aditya Agarwal" />
+  <meta name="creator" content="Aditya Agarwal" />
+  <meta name="publisher" content="Aditya Agarwal" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="theme-color" content="#fcfcfd" />
+  <meta name="application-name" content="Live Neural Network Visualizer" />
+  <link id="canonical-link" rel="canonical" href="https://www.adityaagarwal.me/" />
+  <link rel="me" href="https://github.com/adiagarwalrock/mnist-digits-web" />
+  <link rel="manifest" href="./site.webmanifest" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@adiagarwalrock" />
-    <meta name="twitter:creator" content="@adiagarwalrock" />
-    <meta name="twitter:title" content="MNIST Live Inference Visualizer" />
-    <meta
-      name="twitter:description"
-      content="Interactive MNIST ONNX demo by Aditya Agarwal with real-time probabilities and network visualization."
-    />
-    <meta name="twitter:image" content="https://www.adityaagarwal.me/favicon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="app">
-      <header class="top">
-        <div class="top-copy">
-          <h1>MNIST Live Inference</h1>
-          <p>Draw a digit and watch activations/probabilities update in real time.</p>
-        </div>
-        <a
-          class="top-repo-link"
-          href="https://github.com/adiagarwalrock/mnist-digits-web"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <svg
-            class="github-logo"
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="currentColor"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path
-              d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.11.78-.25.78-.55v-1.93c-3.2.7-3.87-1.36-3.87-1.36-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.56-.29-5.25-1.28-5.25-5.71 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.14 1.18a10.9 10.9 0 0 1 5.72 0c2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.84 1.18 3.1 0 4.44-2.69 5.42-5.26 5.7.41.35.77 1.04.77 2.1v3.12c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"
-            ></path>
-          </svg>
-          <span>GitHub Repo</span>
-        </a>
-      </header>
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:site_name" content="Live Neural Network Visualizer" />
+  <meta property="og:title" content="Live Neural Network Visualizer | Digit & Character Recognition in Browser" />
+  <meta property="og:description"
+    content="Draw a digit or letter on a 28x28 grid and run ONNX inference in real time with live layer/tensor visualization." />
+  <meta property="og:url" content="https://www.adityaagarwal.me/" />
+  <meta property="og:image" content="https://www.adityaagarwal.me/favicon.ico" />
+  <meta property="og:see_also" content="https://github.com/adiagarwalrock/mnist-digits-web" />
 
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@adiagarwalrock" />
+  <meta name="twitter:creator" content="@adiagarwalrock" />
+  <meta name="twitter:title" content="Live Neural Network Visualizer" />
+  <meta name="twitter:description"
+    content="Interactive MNIST & EMNIST ONNX demo by Aditya Agarwal with real-time probabilities and network visualization." />
+  <meta name="twitter:image" content="https://www.adityaagarwal.me/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <main class="app">
+    <header class="top">
+      <div class="top-copy">
+        <h1>Live Neural Network Visualizer</h1>
+        <p>Draw a digit or letter and watch activations/probabilities update in real time.</p>
+      </div>
+      <a class="top-repo-link" href="https://github.com/adiagarwalrock/mnist-digits-web" target="_blank"
+        rel="noopener noreferrer">
+        <svg class="github-logo" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"
+          focusable="false">
+          <path
+            d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.11.78-.25.78-.55v-1.93c-3.2.7-3.87-1.36-3.87-1.36-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.56-.29-5.25-1.28-5.25-5.71 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.14 1.18a10.9 10.9 0 0 1 5.72 0c2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.84 1.18 3.1 0 4.44-2.69 5.42-5.26 5.7.41.35.77 1.04.77 2.1v3.12c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z">
+          </path>
+        </svg>
+        <span>GitHub Repo</span>
+      </a>
+    </header>
+
+    <!-- ========== TAB BAR ========== -->
+    <nav class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" data-tab="digits" aria-selected="true" id="tab-digits">
+        <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"
+          aria-hidden="true">
+          <rect x="3" y="2" width="14" height="16" rx="3" />
+          <text x="10" y="13.5" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor"
+            stroke="none">7</text>
+        </svg>
+        Digit Recognition
+      </button>
+      <button class="tab-btn" role="tab" data-tab="characters" aria-selected="false" id="tab-characters">
+        <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"
+          aria-hidden="true">
+          <rect x="3" y="2" width="14" height="16" rx="3" />
+          <text x="10" y="13.5" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor"
+            stroke="none">A</text>
+        </svg>
+        Character Recognition
+      </button>
+    </nav>
+
+    <!-- ========== DIGITS TAB ========== -->
+    <div class="tab-pane active" id="pane-digits" role="tabpanel" aria-labelledby="tab-digits">
       <section class="grid">
         <article class="panel">
           <h2>Draw Grid</h2>
-          <p class="grid-meta">Model Input Grid: <strong id="grid-dims-label">28 x 28</strong></p>
+          <p class="grid-meta">Model Input Grid: <strong id="grid-dims-label-digits">28 x 28</strong></p>
           <div class="draw-stack">
-            <canvas id="draw-canvas" width="320" height="320"></canvas>
-            <canvas id="grid-canvas" width="320" height="320" aria-hidden="true"></canvas>
+            <canvas id="draw-canvas-digits" width="320" height="320"></canvas>
+            <canvas id="grid-canvas-digits" width="320" height="320" aria-hidden="true"></canvas>
           </div>
           <div class="controls">
-            <button id="clear-btn" type="button">Clear</button>
-            <button id="load-btn" type="button">Load Model</button>
-            <button id="download-btn" type="button">Download Loaded Model</button>
+            <button id="clear-btn-digits" type="button">Clear</button>
+            <button id="load-btn-digits" type="button">Load Model</button>
+            <button id="download-btn-digits" type="button">Download Loaded Model</button>
           </div>
           <label class="field">
             Model URL
-            <input id="model-url" type="text" value="./model/model.onnx" />
+            <input id="model-url-digits" type="text" value="./model/model.onnx" />
           </label>
-          <p id="status" class="status">Load a model (.onnx) to begin.</p>
+          <p id="status-digits" class="status">Load a model (.onnx) to begin.</p>
         </article>
 
         <article class="panel">
           <h2>Layer/Tensor Interaction</h2>
-          <canvas id="network-canvas" width="760" height="320"></canvas>
+          <canvas id="network-canvas-digits" width="760" height="320"></canvas>
         </article>
       </section>
 
       <section class="panel output-panel">
         <div class="output-head">
           <h2>Output Layer (0-9)</h2>
-          <p id="prediction">Prediction: -</p>
+          <p id="prediction-digits">Prediction: -</p>
         </div>
-        <div id="output-grid" class="output-grid"></div>
+        <div id="output-grid-digits" class="output-grid output-grid-10"></div>
+      </section>
+    </div>
+
+    <!-- ========== CHARACTERS TAB ========== -->
+    <div class="tab-pane" id="pane-characters" role="tabpanel" aria-labelledby="tab-characters">
+      <section class="grid">
+        <article class="panel">
+          <h2>Draw Grid</h2>
+          <p class="grid-meta">Model Input Grid: <strong id="grid-dims-label-characters">28 x 28</strong></p>
+          <div class="draw-stack">
+            <canvas id="draw-canvas-characters" width="320" height="320"></canvas>
+            <canvas id="grid-canvas-characters" width="320" height="320" aria-hidden="true"></canvas>
+          </div>
+          <div class="controls">
+            <button id="clear-btn-characters" type="button">Clear</button>
+            <button id="load-btn-characters" type="button">Load Model</button>
+            <button id="download-btn-characters" type="button">Download Loaded Model</button>
+          </div>
+          <label class="field">
+            Model URL
+            <input id="model-url-characters" type="text" value="./model/emnist_model.onnx" />
+          </label>
+          <p id="status-characters" class="status">Switch to this tab to auto-load the character model.</p>
+        </article>
+
+        <article class="panel">
+          <h2>Layer/Tensor Interaction</h2>
+          <canvas id="network-canvas-characters" width="760" height="320"></canvas>
+        </article>
       </section>
 
-      <section class="panel seo-copy">
-        <h2>About This Project</h2>
-        <p>
-          This project is an interactive MNIST digit recognition demo that runs entirely in the browser using ONNX Runtime Web.
-          You can draw on an exact 28x28 input grid, see live prediction probabilities for digits 0-9, and visualize model-layer
-          interactions in real time.
-        </p>
-        <p>
-          Created by <a href="https://www.adityaagarwal.me" target="_blank" rel="noopener noreferrer">Aditya Agarwal</a>,
-          focused on practical machine learning interfaces, AI product engineering, and explainable model behavior.
-        </p>
-        <p>
-          Source code:
-          <a href="https://github.com/adiagarwalrock/mnist-digits-web" target="_blank" rel="noopener noreferrer">
-            github.com/adiagarwalrock/mnist-digits-web
-          </a>
-        </p>
+      <section class="panel output-panel">
+        <div class="output-head">
+          <h2>Output Layer (A-Z)</h2>
+          <p id="prediction-characters">Prediction: -</p>
+        </div>
+        <div id="output-grid-characters" class="output-grid output-grid-26"></div>
       </section>
-    </main>
-    <footer class="footer">
-      <span>Created by Aditya Agarwal</span>
-      <span class="footer-sep">|</span>
-      <a
-        class="github-link"
-        href="https://github.com/adiagarwalrock/mnist-digits-web"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <svg
-          class="github-logo"
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          fill="currentColor"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path
-            d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.11.78-.25.78-.55v-1.93c-3.2.7-3.87-1.36-3.87-1.36-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.56-.29-5.25-1.28-5.25-5.71 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.14 1.18a10.9 10.9 0 0 1 5.72 0c2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.84 1.18 3.1 0 4.44-2.69 5.42-5.26 5.7.41.35.77 1.04.77 2.1v3.12c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"
-          ></path>
-        </svg>
-        <span>GitHub Repo</span>
-      </a>
-      <span class="footer-sep">|</span>
-      <a href="https://www.adityaagarwal.me" target="_blank" rel="noopener noreferrer">Website</a>
-      <span class="footer-sep">|</span>
-      <a href="https://www.linkedin.com/in/adityaagarwal1999/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-    </footer>
+    </div>
 
-    <script type="application/ld+json">
+    <section class="panel seo-copy">
+      <h2>About This Project</h2>
+      <p>
+        This project is an interactive MNIST digit and EMNIST character recognition demo that runs entirely in the
+        browser using ONNX Runtime Web.
+        You can draw on an exact 28x28 input grid, see live prediction probabilities for digits 0-9 or letters A-Z, and
+        visualize model-layer
+        interactions in real time.
+      </p>
+      <p>
+        Created by <a href="https://www.adityaagarwal.me" target="_blank" rel="noopener noreferrer">Aditya Agarwal</a>,
+        focused on practical machine learning interfaces, AI product engineering, and explainable model behavior.
+      </p>
+      <p>
+        Source code:
+        <a href="https://github.com/adiagarwalrock/mnist-digits-web" target="_blank" rel="noopener noreferrer">
+          github.com/adiagarwalrock/mnist-digits-web
+        </a>
+      </p>
+    </section>
+  </main>
+  <footer class="footer">
+    <span>Created by Aditya Agarwal</span>
+    <span class="footer-sep">|</span>
+    <a class="github-link" href="https://github.com/adiagarwalrock/mnist-digits-web" target="_blank"
+      rel="noopener noreferrer">
+      <svg class="github-logo" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"
+        focusable="false">
+        <path
+          d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.11.78-.25.78-.55v-1.93c-3.2.7-3.87-1.36-3.87-1.36-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.56-.29-5.25-1.28-5.25-5.71 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.14 1.18a10.9 10.9 0 0 1 5.72 0c2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.84 1.18 3.1 0 4.44-2.69 5.42-5.26 5.7.41.35.77 1.04.77 2.1v3.12c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z">
+        </path>
+      </svg>
+      <span>GitHub Repo</span>
+    </a>
+    <span class="footer-sep">|</span>
+    <a href="https://www.adityaagarwal.me" target="_blank" rel="noopener noreferrer">Website</a>
+    <span class="footer-sep">|</span>
+    <a href="https://www.linkedin.com/in/adityaagarwal1999/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+  </footer>
+
+  <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@graph": [
           {
             "@type": "SoftwareApplication",
-            "name": "MNIST Live Inference Visualizer",
+            "name": "Live Neural Network Visualizer",
             "applicationCategory": "EducationalApplication",
             "operatingSystem": "Any",
             "url": "https://www.adityaagarwal.me/",
@@ -186,7 +219,7 @@
                 "https://www.linkedin.com/in/adityaagarwal1999/"
               ]
             },
-            "description": "Interactive MNIST digit recognition UI using ONNX Runtime Web with real-time output probabilities and neural visualization.",
+            "description": "Interactive MNIST digit and EMNIST character recognition UI using ONNX Runtime Web with real-time output probabilities and neural visualization.",
             "softwareRequirements": "Modern web browser with JavaScript enabled"
           },
           {
@@ -203,17 +236,18 @@
         ]
       }
     </script>
-    <script>
-      (function () {
-        var url = window.location.href;
-        var canonical = document.getElementById("canonical-link");
-        if (canonical) canonical.href = url;
+  <script>
+    (function () {
+      var url = window.location.href;
+      var canonical = document.getElementById("canonical-link");
+      if (canonical) canonical.href = url;
 
-        var ogUrl = document.querySelector('meta[property="og:url"]');
-        if (ogUrl) ogUrl.setAttribute("content", url);
-      })();
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
-    <script src="./app.js"></script>
-  </body>
+      var ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl) ogUrl.setAttribute("content", url);
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+
 </html>

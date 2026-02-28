@@ -2,3 +2,5 @@ node_modules/
 .wrangler/
 .vercel/
 dist/
+data/
+__pycache__/
