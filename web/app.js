@@ -2,6 +2,11 @@
    app.js – Dual-mode MNIST (digits) / EMNIST (characters) inference
    ================================================================ */
 
+// --------------- visualization constants -------------------------
+const MAX_DISPLAY_NODES = 12; // max visible nodes per layer; rest shown as "..."
+const NODE_GAP = 20;          // px between node centers
+const BASE_NODE_RADIUS = 6;
+
 // --------------- mode definitions --------------------------------
 const MODES = {
   digits: {
@@ -40,6 +45,14 @@ function createModeState(modeKey) {
   gridCanvas.classList.add("grid-canvas");
   networkCanvas.classList.add("network-canvas");
 
+  // offscreen canvas for 28x28 downscale
+  const offscreen = document.createElement("canvas");
+  offscreen.width = 28;
+  offscreen.height = 28;
+  const offscreenCtx = offscreen.getContext("2d", { willReadFrequently: true });
+  offscreenCtx.imageSmoothingEnabled = true;
+  offscreenCtx.imageSmoothingQuality = "medium";
+
   return {
     config: m,
 
@@ -57,19 +70,13 @@ function createModeState(modeKey) {
     gridDimsLabel: document.getElementById(`grid-dims-label-${suffix}`),
 
     // canvas contexts
-    drawCtx: drawCanvas.getContext("2d"),
+    drawCtx: drawCanvas.getContext("2d", { willReadFrequently: true }),
     gridCtx: gridCanvas.getContext("2d"),
     networkCtx: networkCanvas.getContext("2d"),
 
-    // offscreen for 28x28 downscale (context cached for perf)
-    offscreenCanvas: (() => { const c = document.createElement("canvas"); c.width = 28; c.height = 28; return c; })(),
-    offscreenCtx: (() => {
-      const c = document.createElement("canvas"); c.width = 28; c.height = 28;
-      const ctx = c.getContext("2d");
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "medium";
-      return ctx;
-    })(),
+    // offscreen for 28x28 downscale (cached)
+    offscreenCanvas: offscreen,
+    offscreenCtx,
 
     // MNIST-style normalization scratch canvas
     mnistPrepCanvas: (() => { const c = document.createElement("canvas"); c.width = 28; c.height = 28; return c; })(),
@@ -91,8 +98,8 @@ function createModeState(modeKey) {
 
     // network visualization
     layerSpecs: [
-      { name: "Input", count: 28 },
-      { name: "Hidden", count: 16 },
+      { name: "Input", count: 784 },
+      { name: "Hidden", count: 128 },
       { name: "Output", count: m.classCount },
     ],
   };
@@ -137,6 +144,20 @@ autoLoadModel(modes.digits);
 // --------------- tab switching -----------------------------------
 const tabBtns = document.querySelectorAll(".tab-btn");
 const tabPanes = document.querySelectorAll(".tab-pane");
+const tabPill = document.querySelector(".tab-pill");
+
+function positionPill(activeBtn) {
+  if (!tabPill || !activeBtn) return;
+  const bar = activeBtn.parentElement;
+  const barRect = bar.getBoundingClientRect();
+  const btnRect = activeBtn.getBoundingClientRect();
+  const offsetX = btnRect.left - barRect.left - bar.clientLeft;
+  tabPill.style.width = `${btnRect.width}px`;
+  tabPill.style.transform = `translateX(${offsetX - 4}px)`;
+}
+
+// position pill on first tab on load
+requestAnimationFrame(() => positionPill(document.querySelector(".tab-btn.active")));
 
 tabBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -150,6 +171,9 @@ tabBtns.forEach((btn) => {
     btn.classList.add("active");
     btn.setAttribute("aria-selected", "true");
     document.getElementById(`pane-${tabKey}`).classList.add("active");
+
+    // slide the pill
+    positionPill(btn);
 
     currentMode = targetMode;
 
@@ -168,9 +192,9 @@ tabBtns.forEach((btn) => {
 
 // --------------- resize handler ----------------------------------
 window.addEventListener("resize", () => {
-  // only redraw the active mode; hidden canvases have 0 dimensions
   drawInputGrid(currentMode);
   drawNetwork(currentMode, zeroActivations(currentMode));
+  positionPill(document.querySelector(".tab-btn.active"));
 });
 
 // --------------- per-mode button wiring --------------------------
@@ -270,29 +294,21 @@ async function loadOnnxModel(mode, url) {
 // --------------- layer spec builder ------------------------------
 function buildOnnxLayerSpecs(inputDims, outputDims, expectedClassCount) {
   const inputFeatureCount = inferInputFeatureCount(inputDims);
-  let inputNodes = clamp(Math.round(Math.sqrt(inputFeatureCount)), 20, 28);
   const outputNodes = expectedClassCount || inferOutputClassCount(outputDims);
 
   if (outputNodes > 10) {
     // deeper architecture for character model
-    let h1 = clamp(Math.round(inputNodes * 0.65), 14, 20);
-    let h2 = clamp(Math.round(h1 * 0.7), 10, 16);
-    if (h1 === inputNodes) h1 = Math.max(14, inputNodes - 4);
-    if (h2 === h1) h2 = Math.max(10, h1 - 4);
     return [
-      { name: "Input", count: inputNodes },
-      { name: "Hidden 1", count: h1 },
-      { name: "Hidden 2", count: h2 },
-      { name: "Output", count: Math.min(outputNodes, 26) },
+      { name: "Input", count: inputFeatureCount },
+      { name: "Hidden 1", count: 256 },
+      { name: "Hidden 2", count: 128 },
+      { name: "Output", count: outputNodes },
     ];
   }
 
-  let hiddenNodes = clamp(Math.round(inputNodes * 0.58), 12, 18);
-  if (hiddenNodes >= inputNodes) hiddenNodes = Math.max(12, inputNodes - 8);
-  if (outputNodes === hiddenNodes) hiddenNodes = Math.max(12, hiddenNodes - 2);
   return [
-    { name: "Input", count: inputNodes },
-    { name: "Hidden", count: hiddenNodes },
+    { name: "Input", count: inputFeatureCount },
+    { name: "Hidden", count: 128 },
     { name: "Output", count: outputNodes },
   ];
 }
@@ -344,7 +360,7 @@ function setupOutputGrid(mode) {
 
 // --------------- idle / prediction state -------------------------
 function zeroActivations(mode) {
-  return mode.layerSpecs.map((layer) => new Array(layer.count).fill(0));
+  return mode.layerSpecs.map((layer) => new Array(Math.min(layer.count, 50)).fill(0));
 }
 
 function setIdlePredictionState(mode) {
@@ -376,7 +392,7 @@ function drawInputGrid(mode) {
 
   for (let c = 1; c < cols; c += 1) {
     const major = cols % 4 === 0 && c % (cols / 4) === 0;
-    mode.gridCtx.strokeStyle = major ? "rgba(95, 104, 122, 0.28)" : "rgba(95, 104, 122, 0.15)";
+    mode.gridCtx.strokeStyle = major ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)";
     mode.gridCtx.lineWidth = 1;
     const x = c * cellW;
     mode.gridCtx.beginPath();
@@ -387,7 +403,7 @@ function drawInputGrid(mode) {
 
   for (let r = 1; r < rows; r += 1) {
     const major = rows % 4 === 0 && r % (rows / 4) === 0;
-    mode.gridCtx.strokeStyle = major ? "rgba(95, 104, 122, 0.28)" : "rgba(95, 104, 122, 0.15)";
+    mode.gridCtx.strokeStyle = major ? "rgba(95, 104, 122, 0.28)" : "rgba(95, 104, 122, 0.12)";
     mode.gridCtx.lineWidth = 1;
     const y = r * cellH;
     mode.gridCtx.beginPath();
@@ -569,7 +585,7 @@ function normalizeToMnistStyle(mode, src) {
   const offsetX = Math.floor((28 - drawW) / 2);
   const offsetY = Math.floor((28 - drawH) / 2);
 
-  const prepCtx = mode.mnistPrepCanvas.getContext("2d");
+  const prepCtx = mode.mnistPrepCanvas.getContext("2d", { willReadFrequently: true });
   prepCtx.clearRect(0, 0, 28, 28);
   prepCtx.fillStyle = "#000";
   for (let y = 0; y < drawH; y += 1) {
@@ -677,12 +693,12 @@ function updateOutputs(mode, probabilities, winnerIdx = -1) {
 }
 
 // --------------- network visualization --------------------------
+
 function drawNetwork(mode, activations) {
   const dpr = window.devicePixelRatio || 1;
   const width = mode.networkCanvas.clientWidth;
   const height = mode.networkCanvas.clientHeight;
 
-  // guard: if canvas is hidden / has no layout dimensions, retry next frame
   if (width < 1 || height < 1) {
     requestAnimationFrame(() => drawNetwork(mode, activations));
     return;
@@ -690,75 +706,159 @@ function drawNetwork(mode, activations) {
 
   mode.networkCanvas.width = Math.floor(width * dpr);
   mode.networkCanvas.height = Math.floor(height * dpr);
-  mode.networkCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const ctx = mode.networkCtx;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+  ctx.fillRect(0, 0, width, height);
 
-  mode.networkCtx.clearRect(0, 0, width, height);
-  mode.networkCtx.fillStyle = "#ffffff";
-  mode.networkCtx.fillRect(0, 0, width, height);
+  const specs = mode.layerSpecs;
+  const layerCount = specs.length;
+  const LABEL_H = 22;  // space for label below each layer
 
-  const left = 38, right = width - 38, top = 26, bottom = height - 30;
-  const layerGap = mode.layerSpecs.length > 1 ? (right - left) / (mode.layerSpecs.length - 1) : 0;
-  const nodePositions = [];
+  // --- compute each layer's bounding box (horizontal row or grid) ---
+  const layers = specs.map((spec, li) => {
+    const n = spec.count;
+    const acts = activations[li] || [];
 
-  mode.layerSpecs.forEach((layer, layerIndex) => {
-    const x = left + layerGap * layerIndex;
-    const count = layer.count;
-    const span = bottom - top;
-    const nodeGap = count > 1 ? span / (count - 1) : 0;
-    const points = [];
-    for (let i = 0; i < count; i += 1) points.push({ x, y: top + nodeGap * i });
-    nodePositions.push(points);
+    if (li === 0 && n > 50) {
+      // input layer → 2D grid (it represents the 28×28 image)
+      const cols = Math.ceil(Math.sqrt(n));
+      const rows = Math.ceil(n / cols);
+      const maxGridW = width * 0.7;
+      const dotSize = Math.max(1.5, Math.min(4, maxGridW / (cols * 1.5)));
+      const gap = dotSize + Math.max(0.5, dotSize * 0.2);
+      return {
+        spec, n, acts, type: "grid", cols, rows, dotSize, gap,
+        w: cols * gap, h: rows * gap
+      };
+    } else {
+      // all other layers → 1D horizontal row (they are 1D vectors)
+      const maxRowW = width * 0.95;
+      const spacing = Math.min(18, maxRowW / Math.max(n - 1, 1));
+      const r = Math.max(0.8, Math.min(7, spacing * 0.4));
+      return {
+        spec, n, acts, type: "row", r, spacing, visCount: n, truncated: false,
+        w: spacing * (n - 1) + r * 2, h: r * 2
+      };
+    }
   });
 
-  for (let i = 0; i < nodePositions.length - 1; i += 1) {
-    const fromNodes = nodePositions[i];
-    const toNodes = nodePositions[i + 1];
-    const fromActs = activations[i] || [];
-    const toActs = activations[i + 1] || [];
-    const linkSpread = Math.max(2, Math.floor(toNodes.length / 4));
+  // --- distribute layers vertically, evenly spaced ---
+  const padTop = 14;
+  const padBottom = 8;
+  const totalLayerH = layers.reduce((s, l) => s + l.h + LABEL_H, 0);
+  const freeSpace = height - padTop - padBottom - totalLayerH;
+  const gapBetween = Math.max(16, freeSpace / Math.max(layerCount - 1, 1));
 
-    fromNodes.forEach((fromNode, fromIndex) => {
-      for (let k = 0; k < linkSpread; k += 1) {
-        const toIndex = (fromIndex * 3 + k * 2) % toNodes.length;
-        const toNode = toNodes[toIndex];
-        const a = fromActs[fromIndex] || 0;
-        const b = toActs[toIndex] || 0;
-        const strength = clamp((a + b) * 0.5, 0, 1);
+  let curY = padTop;
+  layers.forEach((layer) => {
+    layer.y = curY;
+    layer.cx = width / 2;
+    curY += layer.h + LABEL_H + gapBetween;
+  });
 
-        mode.networkCtx.strokeStyle = `rgba(35, 43, 58, ${0.05 + strength * 0.35})`;
-        mode.networkCtx.lineWidth = 1.2;
-        mode.networkCtx.beginPath();
-        mode.networkCtx.moveTo(fromNode.x + 8, fromNode.y);
-        mode.networkCtx.lineTo(toNode.x - 8, toNode.y);
-        mode.networkCtx.stroke();
-
-        mode.networkCtx.strokeStyle = `rgba(185, 196, 215, ${0.04 + (1 - strength) * 0.3})`;
-        mode.networkCtx.lineWidth = 0.8;
-        mode.networkCtx.beginPath();
-        mode.networkCtx.moveTo(fromNode.x + 7, fromNode.y);
-        mode.networkCtx.lineTo(toNode.x - 7, toNode.y);
-        mode.networkCtx.stroke();
+  // --- compute node center positions for connection drawing ---
+  layers.forEach((layer) => {
+    layer.nodeCenters = [];
+    if (layer.type === "grid") {
+      const startX = layer.cx - layer.w / 2;
+      const startY = layer.y;
+      for (let i = 0; i < layer.n; i++) {
+        const r = Math.floor(i / layer.cols);
+        const c = i % layer.cols;
+        layer.nodeCenters.push({
+          x: startX + c * layer.gap + layer.dotSize / 2,
+          y: startY + r * layer.gap + layer.dotSize / 2,
+        });
       }
-    });
+    } else {
+      const startX = layer.cx - layer.w / 2 + layer.r;
+      for (let i = 0; i < layer.visCount; i++) {
+        layer.nodeCenters.push({ x: startX + i * layer.spacing, y: layer.y + layer.r });
+      }
+    }
+  });
+
+  // --- draw connections (sample N representative source → target lines) ---
+  for (let i = 0; i < layers.length - 1; i++) {
+    const src = layers[i];
+    const dst = layers[i + 1];
+    const srcActs = src.acts;
+    const dstActs = dst.acts;
+
+    // sample ~20 source nodes evenly spread among visible nodes
+    const srcLen = src.nodeCenters.length;
+    const dstLen = dst.nodeCenters.length;
+    const sampleCount = Math.min(20, srcLen);
+    const srcStep = srcLen / sampleCount;
+    // each sampled source connects to 2 target nodes
+    const dstTargets = 2;
+
+    for (let si = 0; si < sampleCount; si++) {
+      const srcIdx = Math.floor(si * srcStep);
+      const sNode = src.nodeCenters[srcIdx];
+      if (!sNode) continue;
+
+      for (let k = 0; k < dstTargets; k++) {
+        const dstIdx = (srcIdx * 3 + k * 7) % dstLen;
+        const dNode = dst.nodeCenters[dstIdx];
+        if (!dNode) continue;
+
+        const a = srcActs[srcIdx] || 0;
+        const b = dstActs[dstIdx] || 0;
+        const s = clamp((a + b) * 0.5, 0, 1);
+
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.05 + s * 0.2})`;
+        ctx.lineWidth = 0.6 + s * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(sNode.x, sNode.y + (src.type === "grid" ? src.dotSize : src.r));
+        ctx.lineTo(dNode.x, dNode.y - (dst.type === "grid" ? dst.dotSize : dst.r));
+        ctx.stroke();
+      }
+    }
   }
 
-  nodePositions.forEach((nodes, layerIndex) => {
-    const acts = activations[layerIndex] || [];
-    nodes.forEach((node, nodeIndex) => {
-      const act = clamp(acts[nodeIndex] || 0, 0, 1);
-      const shade = Math.round(245 - act * 170);
-      mode.networkCtx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
-      mode.networkCtx.strokeStyle = "#2c374a";
-      mode.networkCtx.lineWidth = 1;
-      mode.networkCtx.beginPath();
-      mode.networkCtx.arc(node.x, node.y, 7, 0, Math.PI * 2);
-      mode.networkCtx.fill();
-      mode.networkCtx.stroke();
-    });
+  // --- draw nodes ---
+  layers.forEach((layer) => {
+    if (layer.type === "grid") {
+      const startX = layer.cx - layer.w / 2;
+      const startY = layer.y;
+      const ds = layer.dotSize;
 
-    mode.networkCtx.fillStyle = "#5f6572";
-    mode.networkCtx.font = "11px Manrope";
-    mode.networkCtx.textAlign = "center";
-    mode.networkCtx.fillText(mode.layerSpecs[layerIndex].name, nodes[0].x, height - 10);
+      for (let i = 0; i < layer.n; i++) {
+        const r = Math.floor(i / layer.cols);
+        const c = i % layer.cols;
+        const act = clamp(layer.acts[i] || 0, 0, 1);
+        const shade = Math.round(240 - act * 190);
+        ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+        ctx.fillRect(startX + c * layer.gap, startY + r * layer.gap, ds, ds);
+      }
+      // subtle border around the grid
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(startX - 1, startY - 1, layer.w + 2, layer.h + 2);
+
+    } else {
+      const startX = layer.cx - layer.w / 2 + layer.r;
+      layer.nodeCenters.forEach((node, ni) => {
+        const act = clamp(layer.acts[ni] || 0, 0, 1);
+        const shade = Math.round(245 - act * 170);
+        ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.lineWidth = layer.r < 2 ? 0.5 : 1;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, layer.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
+
+    // label below layer
+    const labelY = layer.y + layer.h + 16;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.font = "11px Manrope";
+    ctx.textAlign = "center";
+    ctx.fillText(`${layer.spec.name} (${layer.n})`, layer.cx, labelY);
   });
 }
